@@ -1,6 +1,6 @@
-from django.shortcuts import render, redirect
-from .models import Producto, Categoria, Proveedor
-from .forms import ProductoForm, CategoriaForm, ProveedorForm
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Producto, Categoria, Proveedor, DetalleProducto
+from .forms import ProductoForm, CategoriaForm, ProveedorForm, DetalleProductoForm
 
 # Create your views here.
 
@@ -14,17 +14,21 @@ def listar_productos(request):
 
 def agregar_producto(request):
     if request.method == 'POST':
-        form = ProductoForm(request.POST)
-        if form.is_valid():
-            form.save()
+        producto_form = ProductoForm(request.POST)
+        detalle_form = DetalleProductoForm(request.POST)
+        if producto_form.is_valid and detalle_form.is_valid():
+            producto = producto_form.save()
+            detalle = detalle_form.save(commit==False)
+            detalle.producto = producto
+            detalle.save()
             return redirect('listar_productos')
     else:
-        form = ProductoForm()
-    return render(request, 'inventario/agregar_producto.html', {'form': form})
-
+        producto_form = ProductoForm()
+        detalle_form = DetalleProductoForm()
+    return render(request, 'inventario/agregar_producto.html', {'producto_form': producto_form, 'detalle_form': detalle_form})
 
 def editar_producto(request, pk):
-    producto = Producto.objects.get(pk=pk)
+    producto = get_object_or_404(Producto, pk=pk)
     if request.method == 'POST':
         form = ProductoForm(request.POST, instance=producto)
         if form.is_valid():
@@ -35,7 +39,7 @@ def editar_producto(request, pk):
     return render(request, 'inventario/editar_producto.html', {'form': form})
 
 def eliminar_producto(request, pk):
-    producto = Producto.objects.get(pk=pk)
+    producto = get_object_or_404(Producto, pk=pk)
     if request.method == 'POST':
         producto.delete()
         return redirect('listar_producto')
@@ -63,7 +67,7 @@ def agregar_categoria(request):
     return render(request, 'inventario/agregar_categoria.html', {'form': form})
 
 def editar_categoria(request, pk):
-    categoria = Categoria.objects.get(pk=pk)
+    categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
         form = CategoriaForm(request.POST, instance=categoria)
         if form.is_valid():
@@ -74,7 +78,7 @@ def editar_categoria(request, pk):
     return render(request, 'inventario/editar_categoria.html', {'form': form})
 
 def eliminar_categoria(request, pk):
-    categoria = Categoria.objects.get(pk=pk)
+    categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
         categoria.delete()
         return redirect('listar_categorias')
@@ -96,7 +100,7 @@ def agregar_proveedor(request):
     return render(request, 'inventario/agregar_proveedor.html', {'form': form})
 
 def editar_proveedor(request, pk):
-    proveedor = Proveedor.objects.get(pk=pk)
+    proveedor = get_object_or_404(Proveedor, pk=pk)
     if request.method == 'POST':
         form = ProveedorForm(request.POST, instance=proveedor)
         if form.is_valid():
@@ -107,7 +111,7 @@ def editar_proveedor(request, pk):
     return render(request, 'inventario/editar_proveedor.html', {'form': form})
 
 def eliminar_proveedor(request, pk):
-    proveedor = Proveedor.objects.get(pk=pk)
+    proveedor = get_object_or_404(Proveedor, pk=pk)
     if request.method == 'POST':
         proveedor.delete()
         return redirect('listar_proveedores')
